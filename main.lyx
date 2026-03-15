@@ -96,6 +96,10 @@
 MATS Simplex Stream Work Test
 \end_layout
 
+\begin_layout Author
+Jan Bauer
+\end_layout
+
 \begin_layout Standard
 \begin_inset FormulaMacro
 \newcommand{\beta}{\bm{\eta}}
@@ -147,6 +151,20 @@ MATS Simplex Stream Work Test
 \end_inset
 
 
+\begin_inset FormulaMacro
+\newcommand{\bR}{\mathbb{R}}
+\end_inset
+
+
+\begin_inset FormulaMacro
+\newcommand{\MLP}{\text{MLP}}
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsubsection*
+Notation
 \end_layout
 
 \begin_layout Standard
@@ -167,7 +185,15 @@ I denote vectors in boldface throughout for vectors and matrices.
 
 ,
  as indicated by the boldface notation within the probability symbol.
- 
+ Let 
+\begin_inset Formula $\be_{k}\coloneqq[0,\ldots,0,1,0,\ldots,0]$
+\end_inset
+
+ denote the unit vector along dimension 
+\begin_inset Formula $k$
+\end_inset
+
+.
 \end_layout
 
 \begin_layout Section*
@@ -256,7 +282,7 @@ Make a pre-registered prediction (honor code) as to what geometry the activation
  and separately give your intuition for what the geometry should look like.
  You will not be penalized for getting this wrong—
 we are interested in both your formal reasoning and your geometric intuition.
- Are there multiple possible geometries you can think of?
+ 
 \end_layout
 
 \begin_layout Standard
@@ -268,8 +294,8 @@ The processes we consider here take the following form (using notation of the pa
 \begin_inset Formula 
 \begin{align*}
 \text{emission-transitions} & P(s',x_{t}|s)=T_{ss'}^{(x_{t})}\\
-\text{marginalized (latent) transitions} & \sum_{x_{t}}P(s',x_{t}|s)=P(s'|s)=T_{ss'}\\
-\text{hidden state distribution } & P(s_{t})=\beta_{t}
+\text{marginalized stationary (latent) transitions} & \sum_{x_{t}}P(s',x_{t}|s)=P(s'|s)=T_{ss'}\\
+\text{hidden state distribution } & P(s_{t}|x_{:t})=\beta_{t}
 \end{align*}
 
 \end_inset
@@ -432,6 +458,10 @@ So the transformer needs to do two tasks:
 \end_layout
 
 \begin_layout Standard
+\begin_inset Note Note
+status collapsed
+
+\begin_layout Plain Layout
 2) can be implemented easily in a transformer by constructing a matrix multiply 
 \begin_inset Formula $W\coloneqq T$
 \end_inset
@@ -475,7 +505,7 @@ transformer
  initialize 
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 \begin_inset Formula 
 \[
 \bx_{0}\coloneqq W_{E}^{-1}\beta_{0},
@@ -486,7 +516,7 @@ transformer
 
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 adopt an identity attention operation,
  and a single-layer MLP block of 
 \begin_inset Formula $W_{\text{MLP}}\coloneqq\bT-\I$
@@ -500,11 +530,11 @@ adopt an identity attention operation,
 .
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 A forward pass (logits) then read
 \begin_inset Formula 
 \begin{align*}
-\bx_{1} & =W_{UE}W_{\text{MLP}}W_{E}\bx_{0}\\
+\bx_{1} & =\bW_{UE}\bW_{\text{MLP}}\bW_{E}\bx_{0}\\
  & =W_{UE}W_{\text{MLP}}W_{E}W_{E}^{-1}\beta_{0}\\
  & =\bW_{UE}T\beta_{0}\\
  & =\bW_{UE}\beta_{1}\\
@@ -516,7 +546,7 @@ A forward pass (logits) then read
 
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 This simple argument has however made the approximation that latent and observation belief states are just related by a linear,
  invertable transform,
  which is not true generally.
@@ -548,11 +578,16 @@ This simple argument has however made the approximation that latent and observat
  We now need to integrate the present inference into the latent inference by doing the belief state update 
 \end_layout
 
-\begin_layout Standard
+\begin_layout Plain Layout
 \begin_inset Formula 
 \[
 \beta_{t}\leftarrow\sum_{s_{t-1}}P(x_{t}|s_{t})P(s_{t}|s_{t-1})\,P(s_{t-1})=\bT^{(x_{t})}\beta_{t-1}.
 \]
+
+\end_inset
+
+
+\end_layout
 
 \end_inset
 
@@ -630,46 +665,76 @@ use the log,
 \end_layout
 
 \begin_layout Paragraph
-Optimal inference in Tranformer forward pass
+Optimal inference in transformer forward pass
 \end_layout
 
 \begin_layout Standard
-I would like to see if we can implement the inference operation in the transformer forward pass,
- this is my attempt at deriving such an implementation.
- We somehow to modulate the static latent transition matrix forward with the observation likelihood.
- However,
- the attention operation just happens in log space.
- To see this,
- write
-\begin_inset Formula 
-\[
-\log P(x_{t}|s_{t})+\log P(s_{t}|s_{t-1})
-\]
-
+I would like to see if we can implement the inference operation for variant 2) in the transformer forward pass using weight-encoded ground truth knowledge of the world properties 
+\begin_inset Formula $P(x_{t}|s{}_{t})$
 \end_inset
 
-
-\end_layout
-
-\begin_layout Standard
-so if we set
-\begin_inset Formula 
-\[
-\left(W_{V}\right)_{s_{t}x_{t}}\coloneqq\log P(x_{t}|s_{t})
-\]
-
+,
+ 
+\begin_inset Formula $P(s'|s)$
 \end_inset
 
+,
+ the following is my attempt at deriving such an implementation.
+ To this end,
+ suppose 
+\begin_inset Formula $\bx_{t}\equiv P(\bx_{t}|s_{t})\in\bR^{|\mathcal{X}|}$
+\end_inset
 
-\end_layout
+ holds the belief over the observation space given the current latent belief.
+ Furthermore,
+ partition the first and second layer's residual stream (RS) into the axis-aligned direct sum 
+\begin_inset Formula $\bh=\bR^{|\mathcal{S}|}\oplus\bR^{|\mathcal{X}|}\oplus\bR^{C}\oplus\bR^{d_{P}}$
+\end_inset
 
-\begin_layout Standard
-the self-attention operation implements in the first layer
+,
+ where 
+\begin_inset Formula $C$
+\end_inset
+
+ denotes the number of contexts (i.e.
+ distinct stochastic processes) and 
+\begin_inset Formula $d_{P}$
+\end_inset
+
+ is some positional embedding (I will only explicitly populate the 
+\begin_inset Formula $\bR^{|\mathcal{S}|}\oplus\bR^{|\mathcal{X}|}$
+\end_inset
+
+ in the following for easier notation).
+ I will denote this partitioning as 
+\begin_inset Formula $\bh=[\bm{a},\,\bm{b}]$
+\end_inset
+
+ for 
+\begin_inset Formula $\bm{a}\in\bR^{|\mathcal{S}|},\,\bm{b}\in\bR^{|\mathcal{X}|}$
+\end_inset
+
+.
+ Let 
+\begin_inset Formula $\hat{\bx}_{t}\in\bR^{|\mathcal{X}|}$
+\end_inset
+
+ be the current one-hot encoded observation,
+ and 
+\begin_inset Formula $\bx_{t}\in\bR^{|\mathcal{X}|}$
+\end_inset
+
+ a continuously-valued belief state on the 
+\begin_inset Formula $\mathcal{X}$
+\end_inset
+
+-simplex.Then,
+ the following steps should implement inference:
 \end_layout
 
 \begin_layout Standard
 1.
- load observation into RS via embed,
+ Load observation into RS via embed,
  already logged by construction,
  
 \begin_inset Formula $\bW_{E}=\I$
@@ -681,7 +746,7 @@ the self-attention operation implements in the first layer
 \begin_layout Standard
 \begin_inset Formula 
 \[
-[0,h^{1}]\coloneqq W_{E}\bx_{t}=[0,P(x_{t}|\bs{}_{t})]
+\bh_{t}^{1}\coloneqq\bW_{E}\bx_{t}=[0,P(x_{t}|s{}_{t})]
 \]
 
 \end_inset
@@ -691,14 +756,14 @@ the self-attention operation implements in the first layer
 
 \begin_layout Standard
 2.
- load last log belief into RS
+ Load last latent belief from the KV cache into the RS via attention
 \end_layout
 
 \begin_layout Standard
 \begin_inset Formula 
 \begin{align*}
-h^{1} & =h^{1}+\sum_{t'}(W_{Q}\bh_{t}^{1})^{\T}(W_{K}\bh_{t'}^{1})W_{V}\bm{h}_{t'}^{1}\\
- & =[\beta_{t},x_{t}]
+\bh_{t}^{1} & =\bh_{t}^{1}+\sum_{t'}\left((\bW_{Q}^{1}\bh_{t}^{1})^{\T}(\bW_{K}^{1}\bh_{t'}^{1})\right)\bW_{V}^{1}\bm{h}_{t'}^{1}\\
+ & =[\beta_{t},P(x_{t}|s{}_{t})],
 \end{align*}
 
 \end_inset
@@ -707,12 +772,42 @@ h^{1} & =h^{1}+\sum_{t'}(W_{Q}\bh_{t}^{1})^{\T}(W_{K}\bh_{t'}^{1})W_{V}\bm{h}_{t
 \end_layout
 
 \begin_layout Standard
-3.
- Forward s subspace by defining the MLP to just be a single layer Matmul
+which is achieved for 
+\begin_inset Formula $\bW_{V}=\I$
+\end_inset
+
+ and having some addition (learned) positional embedding in 
+\begin_inset Formula $\bh^{1}$
+\end_inset
+
+ and projections/shifts 
+\begin_inset Formula $\bW_{Q},\text{\bW}_{K}$
+\end_inset
+
+ such that
+\begin_inset Formula 
+\[
+(\bW_{Q}\bh_{t}^{1})^{\T}(\bW_{K}\bh_{t'}^{1})=\delta_{t,t'+1},
+\]
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Standard
-\begin_inset Formula $\bW_{MLP}\coloneqq\bT-\I$
+i.e.
+ will will only load/add the last latent state belief into the RS.
+ 
+\end_layout
+
+\begin_layout Standard
+3.
+ Forward s subspace by defining the MLP to just be a single layer matmul
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula $\bW_{\MLP}^{1}\coloneqq\bT-\I$
 \end_inset
 
 
@@ -733,7 +828,7 @@ h^{1} & =h^{1}+\sum_{t'}(W_{Q}\bh_{t}^{1})^{\T}(W_{K}\bh_{t'}^{1})W_{V}\bm{h}_{t
 
 \begin_layout Standard
 4.
- mux likelihood
+ Combine with observation likelihood
 \end_layout
 
 \begin_layout Standard
@@ -743,7 +838,7 @@ We now need to combine the belief state with the observations.
 \begin_inset Formula $\log$
 \end_inset
 
-,
+ (this should at least approximatively be possible via universal approximation theorems),
  with a trivial attention operation:
 \begin_inset Formula 
 \[
@@ -757,22 +852,23 @@ We now need to combine the belief state with the observations.
 
 \begin_layout Standard
 Then,
- just operate with another matrix mult 
-\begin_inset Formula $\bW_{MLP}^{3}=\left[\begin{array}{c}
+ just operate with another matmul 
+\begin_inset Formula $\bW_{\MLP}^{3}=\left[\begin{array}{c}
 \I\\
 \I
 \end{array}\right]-\I$
 \end_inset
 
 ,
- giving
+ giving (again with trivial attention)
 \end_layout
 
 \begin_layout Standard
 \begin_inset Formula 
-\[
-\bh^{3}=\log\beta_{t}+\log P(x_{t}|\bs{}_{t})=\log(P(x_{t}|\bs{}_{t})\beta_{t}),
-\]
+\begin{align*}
+\bh^{3} & =\bh^{2}+\bW_{\MLP}^{3}\text{\bh}^{2}\\
+ & =\log\beta_{t}+\log P(x_{t}|\bs{}_{t})=\log\left(P(x_{t}|\bs{}_{t})\beta_{t}\right),
+\end{align*}
 
 \end_inset
 
@@ -793,8 +889,7 @@ This object is proportional matches the belief
 
 \begin_layout Standard
 5.
- maybe:
- unlog -> s
+ Undo logarithmic transform
 \end_layout
 
 \begin_layout Standard
@@ -824,7 +919,7 @@ Now,
 
 \begin_inset Formula 
 \[
-\bx_{t}=\bW_{UE}h_{t}^{4}.
+\bx_{t}=\bW_{UE}\bh_{t}^{4}.
 \]
 
 \end_inset
@@ -874,7 +969,7 @@ This means that the residual stream should encode the belief state
 \end_layout
 
 \begin_layout Paragraph
-Implications for dynamics
+Implications for latent geometry
 \end_layout
 
 \begin_layout Standard
@@ -895,7 +990,7 @@ If this is true,
  
 \begin_inset Formula 
 \[
-\lim_{t\rightarrow\infty}\{\beta_{t}\}_{t}\equiv\{P(\bs_{t}|\bx_{:t})\}_{t}.
+\lim_{t\rightarrow\infty}\{\beta_{t}\}_{t}\equiv\{P(\bs_{t}|x_{:t})\}_{t}.
 \]
 
 \end_inset
@@ -911,7 +1006,180 @@ As for the geometry of this measure,
 
 -dimensional space.
  However,
- there might be some latent structure:
+ there might be some low-dimensional manifold:
+ suppose the latent transition matrix is structured:
+ then,
+ as per Shai et al.
+ (2024) (I am familiar with the paper,
+ but have not re-read it),
+ the set 
+\begin_inset Formula $\{\bT^{t}\bm{1}\}_{t}$
+\end_inset
+
+ will reflect such structure:
+ states 
+\begin_inset Formula $s$
+\end_inset
+
+ that transition to themselves will form clusters,
+ whereas rare states will leave holes in the simplex.
+ 
+\end_layout
+
+\begin_layout Standard
+In particular,
+ I would expect that along context positions,
+ latents 
+\begin_inset Formula $\log\beta_{t}$
+\end_inset
+
+ move according to the incoming evidence,
+ meaning that the evidence 
+\begin_inset Formula $\log P(x_{t}|\bs{}_{t})$
+\end_inset
+
+ is a sort of velocity in latent space (I did not come up with this idea while writing this text,
+ John Schwarcz and I had thought along similar lines during 
+\begin_inset CommandInset href
+LatexCommand href
+name "our work"
+target "https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1013675"
+literal "false"
+
+\end_inset
+
+ on belief state updates in LSTMs).
+ 
+\end_layout
+
+\begin_layout Subsubsection*
+Are there multiple possible geometries you can think of?
+\end_layout
+
+\begin_layout Standard
+I think the number of geometries depends on the number of non-interacting processes that the world environment defines.
+ Each such process context 
+\begin_inset Formula $c$
+\end_inset
+
+ will (relatively) quickly be identified by the transformer,
+ and its updates will be forwarded independently.
+ I'd expect the latter to happen in disjoint subspaces,
+ such that the first layer's MLP would need to be expanded as 
+\begin_inset Formula $\bW_{\MLP}^{1}\coloneqq\text{diag}\left([\bT^{(c)}]_{c}\right)$
+\end_inset
+
+,
+ i.e.
+ a block-diagonal matrix with each context's transition matrix on the diagonal.
+ Recognition of a context could be implemented via 
+\begin_inset Formula $H$
+\end_inset
+
+ multi-head self-attention in layer 0 (one head 
+\begin_inset Formula $h$
+\end_inset
+
+ = one context 
+\begin_inset Formula $c$
+\end_inset
+
+,
+ therefore directly index with 
+\begin_inset Formula $c$
+\end_inset
+
+)
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\sum_{h/c}^{H}\sum_{t'}\left((\bW_{Q}^{0,c}\bx_{t})^{\T}(\bW_{K}^{0,c}\bx_{t'})\right)\bW_{V}^{0,c}\bx_{t'}
+\]
+
+\end_inset
+
+and choices 
+\begin_inset Formula 
+\begin{align*}
+\bW_{V}^{0,c} & =\be_{c}\be_{c}^{\T},\\
+\bW_{Q}^{0,c} & =(\tfrac{1}{S}\sum_{\bx_{t}\sim P(\bx_{t}|c)}^{S}\bx_{t})\be_{0}^{\T},\\
+\bW_{K}^{0,c} & =\I.
+\end{align*}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The rationale here is that 
+\begin_inset Formula $\bW_{Q}^{0,c}$
+\end_inset
+
+ will be a projector onto some aggregate of prototypical states by summing over 
+\begin_inset Formula $S$
+\end_inset
+
+ samples from the marginal,
+ 
+\begin_inset Formula $\tfrac{1}{S}\sum_{\bx_{t}\sim P(\bx_{t}|c)}^{S}\bx_{t}$
+\end_inset
+
+.
+ Then,
+ the head 
+\begin_inset Formula $\sum_{t'}\left((\bW_{Q}^{0,c}\bx_{t})^{\T}(\bW_{K}^{0,c}\bx_{t'})\right)=\text{const}.\times\sum_{t'}\left((\sum_{\bx_{t}\sim P(\bx_{t}|c)}\bx_{t})^{\T}\bx_{t'}\right)$
+\end_inset
+
+,
+ 
+\begin_inset Formula $\text{const}.=\bx_{0}$
+\end_inset
+
+ with the highest projection will dominate the self-attention operation and project 
+\begin_inset Formula $\bW_{V}^{0,c}\bx_{t}=\be_{c}\be_{c}^{\T}\bx_{t}$
+\end_inset
+
+ into the residual stream,
+ therefore encoding context in a one-hot fashion.
+\end_layout
+
+\begin_layout Section*
+Q3
+\end_layout
+
+\begin_layout Subsubsection*
+After training,
+ analyze the residual stream geometry.
+ What structure is there?
+ How does it relate to the belief geometries of the component processes?
+\end_layout
+
+\begin_layout Section*
+Q4
+\end_layout
+
+\begin_layout Subsubsection*
+Perform at least one additional analysis of your choosing that you think is interesting or informative.
+ Tell us why you chose it.
+ If you don’t have time to implement it,
+ describe what you would do.
+\begin_inset Formula 
+\[
+\]
+
+\end_inset
+
+
+\begin_inset Formula 
+\[
+\]
+
+\end_inset
+
+
 \end_layout
 
 \end_body
