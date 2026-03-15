@@ -1,0 +1,1 @@
+- please put plotting, if possible and sensible, to a file plotting.py to keep the frontend notebook manageable
