@@ -160,6 +160,69 @@ def plot_embedding_vs_time(H_layers, ids, instance_params, method="pca",
     return fig
 
 
+def _plot_separation_subfig(subfig, H_layers, ids, instance_params, method, positions,
+                            show_instances, beliefs, title):
+    """Helper: fill one subfigure with the separation grid."""
+    n_layers = len(H_layers)
+    N, seq_len, d_model = H_layers[0].shape
+    colors = _instance_colors(len(instance_params))
+    layer_names = _layer_names(n_layers - 1)
+    order = _layer_order(n_layers)
+    n_pos = len(positions)
+
+    inst_mask = np.isin(ids, show_instances)
+    beliefs_sub = beliefs[inst_mask] if beliefs is not None else None
+
+    axes = subfig.subplots(n_layers, n_pos)
+    for row_idx, layer_idx in enumerate(order):
+        H_sub = H_layers[layer_idx][inst_mask]
+        ids_sub = ids[inst_mask]
+        proj = _project_layer(H_sub, ids_sub, beliefs_sub, method, per_instance=False)
+        for col, pos in enumerate(positions):
+            ax = axes[row_idx, col]
+            for i in show_instances:
+                mask = ids_sub == i
+                ax.scatter(proj[mask, pos, 0], proj[mask, pos, 1], s=4, alpha=0.4, color=colors[i])
+            if row_idx == 0: ax.set_title(f"pos {pos}", fontsize=8)
+            if col == 0: ax.set_ylabel(layer_names[layer_idx], fontsize=8)
+            ax.set_xticks([]); ax.set_yticks([])
+
+    for i in show_instances:
+        a, x = instance_params[i]
+        axes[0, -1].scatter([], [], color=colors[i], label=f"α={a}, x={x}", s=20)
+    axes[0, -1].legend(fontsize=5, markerscale=2, loc="upper right")
+    subfig.suptitle(title, fontsize=10)
+
+
+def plot_separation_combined(H_layers, ids, instance_params, method="pca",
+                             positions=None, beliefs=None,
+                             hard_instances=(1, 6), easy_instances=(3, 2)):
+    """Combined hard + easy pair separation in one figure using subfigures."""
+    N, seq_len, d_model = H_layers[0].shape
+    n_layers = len(H_layers)
+    if positions is None:
+        positions = np.linspace(0, seq_len - 1, min(8, seq_len), dtype=int).tolist()
+    n_pos = len(positions)
+    label = method.upper()
+
+    fig = plt.figure(figsize=(3 * n_pos, 3 * n_layers * 2 + 1), layout='constrained')
+    subfigs = fig.subfigures(2, 1, hspace=0.08)
+
+    hi, hj = hard_instances
+    a1, x1 = instance_params[hi]; a2, x2 = instance_params[hj]
+    _plot_separation_subfig(subfigs[0], H_layers, ids, instance_params, method, positions,
+                            list(hard_instances), beliefs,
+                            f"Hard pair ({label}): α={a1},x={x1} vs α={a2},x={x2}")
+
+    ei, ej = easy_instances
+    a1, x1 = instance_params[ei]; a2, x2 = instance_params[ej]
+    _plot_separation_subfig(subfigs[1], H_layers, ids, instance_params, method, positions,
+                            list(easy_instances), beliefs,
+                            f"Easy pair ({label}): α={a1},x={x1} vs α={a2},x={x2}")
+
+    return fig
+
+
 def plot_training_dynamics_grid(all_layer_projs, snap_steps, eval_ids, instance_idx,
                                 instance_params, n_layers):
     """Grid: rows=layers (bottom=emb), cols=training steps, single instance.

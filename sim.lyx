@@ -5,6 +5,11 @@
 \save_transient_properties true
 \origin unavailable
 \textclass scrartcl
+\begin_preamble
+\usepackage{caption}
+\captionsetup{font=small,labelfont=bf,format=plain}
+\setlength{\parindent}{0pt}
+\end_preamble
 \use_default_options true
 \maintain_unincluded_children no
 \language english
@@ -66,11 +71,11 @@
 \leftmargin 2cm
 \topmargin 2cm
 \rightmargin 2cm
-\bottommargin 2cm
+\bottommargin 4cm
 \secnumdepth 3
 \tocdepth 3
-\paragraph_separation indent
-\paragraph_indentation default
+\paragraph_separation skip
+\defskip medskip
 \is_math_indent 0
 \math_numbering_side default
 \quotes_style english
@@ -206,7 +211,7 @@ status open
 \begin_layout Plain Layout
 \begin_inset Graphics
 	filename figs/embed_per_instance_pca.png
-	lyxscale 30
+	lyxscale 15
 	width 100text%
 
 \end_inset
@@ -224,50 +229,49 @@ name "fig:embed_per_instance"
 
 \end_inset
 
-PCA of residual stream activations (all sequence positions).
+
+\series bold
+Latent state geometry develops in layers 0 and 1.
+
+\series default
+ PCA projections of activations at all sequence positions.
  Rows:
  layers (bottom = embedding,
  top = layer 2).
  Columns:
- Mess3 instances.
- Deeper layers develop more structured,
- simplex-like geometry.
-\end_layout
-
+ Mess3 instances with parameters 
+\begin_inset Formula $(\alpha,x)$
 \end_inset
 
-
-\end_layout
-
-\end_inset
-
-At the embedding layer,
- structure is minimal:
- activations reflect token identity more than latent state.
+.
+ At the embedding layer,
+ structure is minimal and reflects token identity.
  In deeper layers,
- activations progressively organize into instance-specific geometries.
- For instances with strong emission signals (high 
+ activations organize into instance-specific geometries:
+ instances with strong emission signals (high 
 \begin_inset Formula $\alpha$
 \end_inset
 
 ,
- low 
+ low
 \begin_inset Formula $x$
 \end_inset
 
-),
- the residual stream develops clear structure,
- which seems moreover compatible with the probabilistic constraint 
-\begin_inset Formula $\sum_{s_{t}}P(s_{t}|x_{:t})=1$
+) develop clear simplex-like structure compatible with the constraint 
+\begin_inset Formula $\sum_{\bs_{t}}P(\bs_{t}|x_{1:t})=1$
 \end_inset
 
- (here:
- a triangle).
- For noisier instances,
- the geometry is more diffuse but still differentiable from other instances.
+,
+ while noisier instances show more diffuse but still distinct geometry.
 \end_layout
 
-\begin_layout Standard
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
 This is consistent with the prediction from Q2 that deeper layers should encode the belief state 
 \begin_inset Formula $P(\bm{s}_{t}|x_{1:t})$
 \end_inset
@@ -305,7 +309,7 @@ Perform at least one additional analysis of your choosing that you think is inte
 \end_layout
 
 \begin_layout Subsection*
-Training dynamics of a single instance
+Training dynamics
 \end_layout
 
 \begin_layout Standard
@@ -357,7 +361,7 @@ status open
 \begin_layout Plain Layout
 \begin_inset Graphics
 	filename figs/training_dynamics.png
-	lyxscale 30
+	lyxscale 15
 	width 100text%
 
 \end_inset
@@ -375,7 +379,12 @@ name "fig:dynamics"
 
 \end_inset
 
-Training dynamics for instance 
+
+\series bold
+Latent state geometry develops early in training.
+
+\series default
+ PCA of residual stream activations at the last sequence position for instance 
 \begin_inset Formula $(\alpha=0.6,x=0.15)$
 \end_inset
 
@@ -384,8 +393,8 @@ Training dynamics for instance
  layers (bottom = embedding,
  top = layer 2).
  Columns:
- training steps.
- Each subplot shows PCA of residual stream activations at the last sequence position.
+ training steps (from initialization to convergence).
+ Structured geometry emerges first in later layers and propagates backward over training.
 \end_layout
 
 \end_inset
@@ -395,13 +404,8 @@ Training dynamics for instance
 
 \end_inset
 
-At initialization,
- activations are unstructured.
- Over training,
- they progressively organize into a compact geometry.
- This structure emerges first in later layers and propagates backward:
- the final transformer layer develops belief-state geometry earliest,
- while the embedding layer remains relatively unstructured.
+The belief-state geometry emerges progressively over training,
+ with later layers leading and the embedding layer lagging behind.
 \end_layout
 
 \begin_layout Subsection*
@@ -410,9 +414,9 @@ Instance separation over context position
 
 \begin_layout Standard
 To test whether the transformer progressively infers which instance it is in,
- we examine how residual stream representations separate across instances as a function of sequence position.
+ I examined how residual stream representations separate across instances as a function of sequence position.
  We select two pairs:
- a
+ a 
 \begin_inset Quotes eld
 \end_inset
 
@@ -424,11 +428,11 @@ hard
 \begin_inset Formula $\alpha=0.79,x=0.11$
 \end_inset
 
- vs
+ vs 
 \begin_inset Formula $\alpha=0.85,x=0.10$
 \end_inset
 
-) and an
+) and an 
 \begin_inset Quotes eld
 \end_inset
 
@@ -440,34 +444,19 @@ easy
 \begin_inset Formula $\alpha=0.90,x=0.05$
 \end_inset
 
- vs
+ vs 
 \begin_inset Formula $\alpha=0.60,x=0.50$
 \end_inset
 
 ).
- We embed activations from each pair jointly and plot them at each position (Figures
+ We project activations from each pair via a joint PCA and plot them at each position (Figure
 \begin_inset space ~
 \end_inset
 
 
 \begin_inset CommandInset ref
 LatexCommand ref
-reference "fig:separation_hard"
-plural "false"
-caps "false"
-noprefix "false"
-nolink "false"
-
-\end_inset
-
- and
-\begin_inset space ~
-\end_inset
-
-
-\begin_inset CommandInset ref
-LatexCommand ref
-reference "fig:separation_easy"
+reference "fig:separation"
 plural "false"
 caps "false"
 noprefix "false"
@@ -476,18 +465,6 @@ nolink "false"
 \end_inset
 
 ).
-\end_layout
-
-\begin_layout Standard
-At position 0,
- both pairs are fully overlapping:
- the model has seen only one token and cannot distinguish the underlying process.
- As context accumulates,
- the clusters progressively separate,
- particularly in deeper layers.
- As expected,
- the easy pair separates earlier and more cleanly than the hard pair.
- This confirms that the transformer uses context to perform Bayesian-like inference over the identity of the generating process.
 \end_layout
 
 \begin_layout Standard
@@ -500,8 +477,8 @@ status open
 
 \begin_layout Plain Layout
 \begin_inset Graphics
-	filename figs/separation_hard_pair_pca.png
-	lyxscale 30
+	filename figs/separation_pairs_pca.png
+	lyxscale 15
 	width 100text%
 
 \end_inset
@@ -515,13 +492,20 @@ status open
 \begin_layout Plain Layout
 \begin_inset CommandInset label
 LatexCommand label
-name "fig:separation_hard"
+name "fig:separation"
 
 \end_inset
 
-Hard pair:
- instance separation over sequence position (PCA).
- Two instances with similar parameters (
+
+\series bold
+Easy instance pairs are more separable than hard pairs,
+ but not linearly so.
+
+\series default
+ PCA of residual stream activations,
+ embedded jointly for each pair.
+ Top:
+ hard pair with similar parameters (
 \begin_inset Formula $\alpha=0.79,x=0.11$
 \end_inset
 
@@ -530,54 +514,8 @@ Hard pair:
 \end_inset
 
 ).
- Rows:
- layers (bottom = embedding).
- Columns:
- sequence positions.
-\end_layout
-
-\end_inset
-
-
-\end_layout
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Standard
-\begin_inset Float figure
-placement h
-alignment document
-wide false
-sideways false
-status open
-
-\begin_layout Plain Layout
-\begin_inset Graphics
-	filename figs/separation_easy_pair_pca.png
-	lyxscale 30
-	width 100text%
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Plain Layout
-\begin_inset Caption Standard
-
-\begin_layout Plain Layout
-\begin_inset CommandInset label
-LatexCommand label
-name "fig:separation_easy"
-
-\end_inset
-
-Easy pair:
- instance separation over sequence position (PCA).
- Two instances with very different parameters (
+ Bottom:
+ easy pair with very different parameters (
 \begin_inset Formula $\alpha=0.90,x=0.05$
 \end_inset
 
@@ -586,7 +524,14 @@ Easy pair:
 \end_inset
 
 ).
- Separation is faster and cleaner than the hard pair.
+ Within each panel,
+ rows:
+ layers (bottom = embedding).
+ Columns:
+ sequence positions (0 through 15).
+ At early positions the clusters overlap:
+ separation increases with context and layer depth,
+ and is faster for the easy pair.
 \end_layout
 
 \end_inset
@@ -597,6 +542,17 @@ Easy pair:
 \end_inset
 
 
+\end_layout
+
+\begin_layout Standard
+The easy pair separates earlier and more cleanly than the hard pair.
+ This is compatible with the hypothesis that the transformer uses context to perform Bayesian-like inference over the identity of the generating process.
+ However,
+ there is no separating into linear,
+ disjoint subspaces for any context as might have been expected;
+ rather,
+ the same dimensions appear to be reused.
+ 
 \end_layout
 
 \begin_layout Subsection*
@@ -604,19 +560,32 @@ Flow fields conditioned on incoming evidence
 \end_layout
 
 \begin_layout Standard
-To visualize how individual token observations update the residual stream,
- we compute flow fields:
- for each position
+The previous sections have focussed on analyzing the residual stream jointly over all sequence positions,
+ in a way visualizing the marginal 
+\begin_inset Formula $P(s_{t})=\sum_{x_{t}}P(s_{t}|x_{t})P(x_{t})$
+\end_inset
+
+.
+ In this section,
+ I now want to ask about dynamics:
+ can we indeed treat each incoming token as a directional update to the residual stream,
+ depending on the token?
+ 
+\end_layout
+
+\begin_layout Standard
+To this end,
+ for each position 
 \begin_inset Formula $t$
 \end_inset
 
 ,
- the velocity
+ I visualized the velocity 
 \begin_inset Formula $\Delta\bm{h}=\bm{h}_{t+1}-\bm{h}_{t}$
 \end_inset
 
  in PCA space,
- conditioned on the incoming token
+ conditioned on the incoming token 
 \begin_inset Formula $x_{t+1}\in\{0,1,2\}$
 \end_inset
 
@@ -638,7 +607,7 @@ nolink "false"
 ).
  Each column corresponds to one token value:
  each row to one layer.
- We chose this analysis because the theoretical framework in Q2 predicts that incoming evidence
+ We chose this analysis because the theoretical framework in Q2 predicts that incoming evidence 
 \begin_inset Formula $\log P(x_{t}|\bm{s}_{t})$
 \end_inset
 
@@ -646,9 +615,8 @@ nolink "false"
 \end_layout
 
 \begin_layout Standard
-The flow fields show that each token drives the representation in a characteristic direction,
- and these directions become more structured in deeper layers.
- This suggests the transformer implements approximate belief updates where each token pushes the latent representation toward the simplex vertex associated with that token's preferred hidden state.
+Each token drives the representation in a characteristic direction,
+ suggesting the transformer implements approximate belief updates where each token pushes the latent representation toward the simplex vertex associated with that token's preferred hidden state.
 \end_layout
 
 \begin_layout Standard
@@ -662,7 +630,7 @@ status open
 \begin_layout Plain Layout
 \begin_inset Graphics
 	filename figs/flow_fields_instance_0.png
-	lyxscale 30
+	lyxscale 15
 	width 100text%
 
 \end_inset
@@ -680,20 +648,36 @@ name "fig:flow"
 
 \end_inset
 
-Flow fields for instance
+
+\series bold
+Latent state updates are directional with the incoming token.
+
+\series default
+ Streamlines of 
+\begin_inset Formula $\Delta\bm{h}=\bm{h}_{t+1}-\bm{h}_{t}$
+\end_inset
+
+ in PCA space for instance 
 \begin_inset Formula $(\alpha=0.6,x=0.15)$
+\end_inset
+
+,
+ conditioned on the incoming token 
+\begin_inset Formula $x_{t+1}$
 \end_inset
 
 .
  Rows:
  layers (bottom = embedding).
  Columns:
- incoming token
+ token identity 
 \begin_inset Formula $x_{t+1}\in\{0,1,2\}$
 \end_inset
 
 .
- Streamlines show how the residual stream moves upon observing each token.
+ Gray dots show all positions:
+ streamlines show the average displacement upon observing each token.
+ 
 \end_layout
 
 \end_inset
@@ -704,371 +688,59 @@ Flow fields for instance
 \end_inset
 
 
+\end_layout
+
+\begin_layout Standard
+Indeed,
+ the residual stream's updates are strongly directional,
+ and in a way that depends on incoming evidence.
+ This seems to point to the corners of the simplex,
+ and seems to be compatible with the log-addition analysis of the theoretical section.
+ 
 \end_layout
 
 \begin_layout Subsection*
-Proposals for further analysis
-\end_layout
-
-\begin_layout Section*
-\begin_inset CommandInset label
-LatexCommand label
-name "sec:training-details"
-
-\end_inset
-
-Appendix A:
- Training details
+Limitations & further analysis
 \end_layout
 
 \begin_layout Standard
-We construct a non-ergodic dataset from 8 Mess3 instances with parameter pairs
-\begin_inset Formula $(\alpha,x)\in\{(0.60,0.15),(0.79,0.11),(0.60,0.50),(0.90,0.05),(0.40,0.30),(0.70,0.25),(0.85,0.10),(0.50,0.40)\}$
+Some of the simulation results seem compatible with the theoretical argument (simplex structure,
+ state updates depend on evidence),
+ but some clearly different (orthogonal spaces for different tasks).
+ I would find it interesting to in a mechanistic interpretability style analysis find the cause of the discrepancies and see how the transformer actually implements Bayesian inference (if at all).
+ To this end,
+ I could imagine 
+\end_layout
+
+\begin_layout Enumerate
+trying to compute subspace angles for different instances,
+ to get a sense of whether they are at least somewhat orthogonal
+\end_layout
+
+\begin_layout Enumerate
+inspect the attention weights to see if they match what is outlined in the theory section
+\end_layout
+
+\begin_layout Enumerate
+see whether the attention-weighted state indeed matches the 
+\begin_inset Quotes eld
 \end_inset
 
-.
- Each Mess3 instance is a 3-state HMM emitting tokens from
-\begin_inset Formula $\{0,1,2\}$
+template
+\begin_inset Quotes erd
 \end_inset
 
-,
- parameterized by
-\begin_inset Formula $\alpha$
-\end_inset
+ used for context inference
+\end_layout
 
- (emission peakedness) and
-\begin_inset Formula $x$
-\end_inset
-
- (hidden state mixing rate).
- We sample 10,000 sequences of length 16 per instance (80,000 total),
- where each sequence is generated entirely from one ergodic instance.
- The model sees only token sequences:
- no instance label is provided.
+\begin_layout Enumerate
+test out-of-distribution generalization by testing on an instance with parameters not seen during traning
 \end_layout
 
 \begin_layout Standard
-The transformer has 3 layers,
-\begin_inset Formula $d_{\text{model}}=64$
-\end_inset
-
-,
-\begin_inset Formula $d_{\text{MLP}}=256$
-\end_inset
-
-,
- 4 attention heads,
- and a context window of 16 (151k parameters).
- We train with Adam (
-\begin_inset Formula $\text{lr}=3\times10^{-4}$
-\end_inset
-
-) for up to 200 epochs with early stopping:
- we fit a line to
-\begin_inset Formula $\log(\text{epoch})$
-\end_inset
-
- vs
-\begin_inset Formula $\log(\text{loss})$
-\end_inset
-
- over the last 20 epochs and stop when the slope exceeds
-\begin_inset Formula $-0.005$
-\end_inset
-
-.
-\end_layout
-
-\begin_layout Standard
-Figure
-\begin_inset space ~
-\end_inset
-
-
-\begin_inset CommandInset ref
-LatexCommand ref
-reference "fig:loss"
-plural "false"
-caps "false"
-noprefix "false"
-nolink "false"
-
-\end_inset
-
- shows per-instance loss curves.
- Instances with high
-\begin_inset Formula $\alpha$
-\end_inset
-
- and low
-\begin_inset Formula $x$
-\end_inset
-
- (strong signal,
- slow mixing) converge to lower loss,
- while those with low
-\begin_inset Formula $\alpha$
-\end_inset
-
- or high
-\begin_inset Formula $x$
-\end_inset
-
- approach the entropy floor
-\begin_inset Formula $\log3\approx1.099$
-\end_inset
-
-.
-\end_layout
-
-\begin_layout Standard
-\begin_inset Float figure
-placement h
-alignment document
-wide false
-sideways false
-status open
-
-\begin_layout Plain Layout
-\begin_inset Graphics
-	filename figs/per_instance_loss.png
-	lyxscale 50
-	width 100text%
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Plain Layout
-\begin_inset Caption Standard
-
-\begin_layout Plain Layout
-\begin_inset CommandInset label
-LatexCommand label
-name "fig:loss"
-
-\end_inset
-
-Per-instance training loss curves (left:
- log-log,
- right:
- linear).
-\end_layout
-
-\end_inset
-
-
-\end_layout
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Section*
-\begin_inset CommandInset label
-LatexCommand label
-name "sec:supervised-appendix"
-
-\end_inset
-
-Appendix B:
- Supervised readout projections
-\end_layout
-
-\begin_layout Standard
-As a complement to the unsupervised PCA projections used in the main text,
- we here show the same analyses using a supervised linear readout.
- For each layer,
- we fit a Ridge regression from residual stream activations to the ground-truth predictive vectors
-\begin_inset Formula $\bm{\eta}^{(x_{1:t})}$
-\end_inset
-
-,
- which are computable from the known Mess3 transition matrices.
- For the per-instance plots,
- we fit one readout per instance:
- for the separation plots,
- we fit a single readout across both instances so the projection space is shared.
- Since the belief states live on a 2-simplex,
- we display the first two coordinates of the predicted belief vector.
-\end_layout
-
-\begin_layout Standard
-\begin_inset Float figure
-placement h
-alignment document
-wide false
-sideways false
-status open
-
-\begin_layout Plain Layout
-\begin_inset Graphics
-	filename figs/embed_per_instance_supervised.png
-	lyxscale 30
-	width 100text%
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Plain Layout
-\begin_inset Caption Standard
-
-\begin_layout Plain Layout
-\begin_inset CommandInset label
-LatexCommand label
-name "fig:embed_supervised"
-
-\end_inset
-
-Supervised readout of residual stream to belief states (all sequence positions).
- Rows:
- layers.
- Columns:
- instances.
- Compare with Figure
-\begin_inset space ~
-\end_inset
-
-
-\begin_inset CommandInset ref
-LatexCommand ref
-reference "fig:embed_per_instance"
-plural "false"
-caps "false"
-noprefix "false"
-nolink "false"
-
-\end_inset
-
-.
-\end_layout
-
-\end_inset
-
-
-\end_layout
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Standard
-\begin_inset Float figure
-placement h
-alignment document
-wide false
-sideways false
-status open
-
-\begin_layout Plain Layout
-\begin_inset Graphics
-	filename figs/separation_hard_pair_supervised.png
-	lyxscale 30
-	width 100text%
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Plain Layout
-\begin_inset Caption Standard
-
-\begin_layout Plain Layout
-\begin_inset CommandInset label
-LatexCommand label
-name "fig:separation_hard_supervised"
-
-\end_inset
-
-Supervised readout:
- hard pair separation over sequence position.
- Compare with Figure
-\begin_inset space ~
-\end_inset
-
-
-\begin_inset CommandInset ref
-LatexCommand ref
-reference "fig:separation_hard"
-plural "false"
-caps "false"
-noprefix "false"
-nolink "false"
-
-\end_inset
-
-.
-\end_layout
-
-\end_inset
-
-
-\end_layout
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Standard
-\begin_inset Float figure
-placement h
-alignment document
-wide false
-sideways false
-status open
-
-\begin_layout Plain Layout
-\begin_inset Graphics
-	filename figs/separation_easy_pair_supervised.png
-	lyxscale 30
-	width 100text%
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Plain Layout
-\begin_inset Caption Standard
-
-\begin_layout Plain Layout
-\begin_inset CommandInset label
-LatexCommand label
-name "fig:separation_easy_supervised"
-
-\end_inset
-
-Supervised readout:
- easy pair separation over sequence position.
- Compare with Figure
-\begin_inset space ~
-\end_inset
-
-
-\begin_inset CommandInset ref
-LatexCommand ref
-reference "fig:separation_easy"
-plural "false"
-caps "false"
-noprefix "false"
-nolink "false"
-
-\end_inset
-
-.
-\end_layout
-
-\end_inset
-
-
-\end_layout
+\begin_inset CommandInset include
+LatexCommand input
+filename "appendix.lyx"
 
 \end_inset
 

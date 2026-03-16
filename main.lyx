@@ -211,6 +211,14 @@ I denote vectors in boldface throughout for vectors and matrices.
 \end_inset
 
 .
+ Moreover,
+ I use Python-like slicing notations for time series,
+ i.e.
+ 
+\begin_inset Formula $x_{1:t}\coloneqq[x_{1},x_{2},\ldots,x_{t}]$
+\end_inset
+
+.
 \end_layout
 
 \begin_layout Section*
@@ -225,7 +233,16 @@ Construct a non-ergodic training dataset,
 \end_layout
 
 \begin_layout Standard
-See code.
+Please see the code at the 
+\begin_inset CommandInset href
+LatexCommand href
+name "repository"
+target "https://github.com/japhba/mats-simplex-2026"
+literal "false"
+
+\end_inset
+
+.
 \end_layout
 
 \begin_layout Subsubsection*
@@ -310,7 +327,7 @@ The processes we consider here take the following form (using notation of the pa
 \begin_layout Standard
 \begin_inset Formula 
 \begin{align*}
-\text{emission-transitions} & P(s',x_{t}|s)=T_{ss'}^{(x_{t})}\\
+\text{emission-transitions } & P(s',x_{t}|s)=T_{ss'}^{(x_{t})}\\
 \text{marginalized stationary (latent) transitions} & \sum_{x_{t}}P(s',x_{t}|s)=P(s'|s)=T_{ss'}\\
 \text{hidden state distribution } & P(s_{t}|x_{:t})=\beta_{t}
 \end{align*}
