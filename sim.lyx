@@ -108,12 +108,12 @@ Setup
 \end_layout
 
 \begin_layout Standard
-We construct a non-ergodic dataset from 8 Mess3 instances with distinct parameter pairs
+I construct a non-ergodic dataset from 8 Mess3 instances with distinct parameter pairs 
 \begin_inset Formula $(\alpha,x)$
 \end_inset
 
  and train a small GPT-2 style transformer (3 layers,
-
+ 
 \begin_inset Formula $d_{\text{model}}=64$
 \end_inset
 
@@ -136,8 +136,16 @@ nolink "false"
 
  for full training details.
  All residual stream visualizations in the main text use PCA,
- which is unsupervised and therefore a weaker ask: any structure visible in PCA must be among the dominant directions of variance,
+ which is unsupervised and therefore a weaker ask:
+ any structure visible in PCA must be among the dominant directions of variance,
  not a consequence of fitting to known labels.
+ If this works,
+ it means that it was computationally beneficial to encode the beliefs in 
+\shape italic
+prominent
+\shape default
+ dimensions of latent space (i.e.,
+ high variance).
  Appendix
 \begin_inset space ~
 \end_inset
@@ -153,7 +161,11 @@ nolink "false"
 
 \end_inset
 
- shows the same analyses using a supervised linear readout to ground-truth belief states.
+ shows the same analyses using a supervised linear readout to the ground-truth belief states 
+\begin_inset Formula $\bs$
+\end_inset
+
+.
 \end_layout
 
 \begin_layout Subsection*
@@ -161,7 +173,7 @@ Residual stream geometry across layers
 \end_layout
 
 \begin_layout Standard
-We extract residual stream activations at all sequence positions after each layer (embedding,
+I extract residual stream activations at all sequence positions after each layer (embedding,
  layer 0,
  layer 1,
  layer 2) and project them to 2D via PCA (Figure
@@ -180,37 +192,7 @@ nolink "false"
 \end_inset
 
 ).
- Each column shows one Mess3 instance: each row shows one layer,
- with the embedding at the bottom and the deepest layer at the top.
-\end_layout
-
-\begin_layout Standard
-At the embedding layer,
- structure is minimal: activations reflect token identity more than latent state.
- In deeper layers,
- activations progressively organize into instance-specific geometries.
- For instances with strong emission signals (high
-\begin_inset Formula $\alpha$
-\end_inset
-
-,
- low
-\begin_inset Formula $x$
-\end_inset
-
-),
- the residual stream develops clear simplex-like structure consistent with the 2-simplex of belief states over 3 hidden states.
- For noisier instances,
- the geometry is more diffuse but still differentiable from other instances.
-\end_layout
-
-\begin_layout Standard
-This is consistent with the prediction from Q2 that deeper layers should encode the belief state
-\begin_inset Formula $P(\bm{s}_{t}|x_{1:t})$
-\end_inset
-
-,
- and that each instance's belief states live on a 2-simplex embedded in an orthogonal subspace of the residual stream.
+ 
 \end_layout
 
 \begin_layout Standard
@@ -243,9 +225,11 @@ name "fig:embed_per_instance"
 \end_inset
 
 PCA of residual stream activations (all sequence positions).
- Rows: layers (bottom = embedding,
+ Rows:
+ layers (bottom = embedding,
  top = layer 2).
- Columns: Mess3 instances.
+ Columns:
+ Mess3 instances.
  Deeper layers develop more structured,
  simplex-like geometry.
 \end_layout
@@ -257,7 +241,56 @@ PCA of residual stream activations (all sequence positions).
 
 \end_inset
 
+At the embedding layer,
+ structure is minimal:
+ activations reflect token identity more than latent state.
+ In deeper layers,
+ activations progressively organize into instance-specific geometries.
+ For instances with strong emission signals (high 
+\begin_inset Formula $\alpha$
+\end_inset
 
+,
+ low 
+\begin_inset Formula $x$
+\end_inset
+
+),
+ the residual stream develops clear structure,
+ which seems moreover compatible with the probabilistic constraint 
+\begin_inset Formula $\sum_{s_{t}}P(s_{t}|x_{:t})=1$
+\end_inset
+
+ (here:
+ a triangle).
+ For noisier instances,
+ the geometry is more diffuse but still differentiable from other instances.
+\end_layout
+
+\begin_layout Standard
+This is consistent with the prediction from Q2 that deeper layers should encode the belief state 
+\begin_inset Formula $P(\bm{s}_{t}|x_{1:t})$
+\end_inset
+
+,
+ and that each instance's belief states live on a 2-simplex embedded in an orthogonal subspace of the residual stream.
+ However,
+ there does not seem to be a clear distinction between one layer holding a log-belief,
+ others holding the raw belief,
+ and so on,
+ so that the algorithmic hypothesis from 
+\begin_inset CommandInset ref
+LatexCommand formatted
+reference "par:Optimal-inference"
+plural "false"
+caps "false"
+noprefix "false"
+nolink "false"
+
+\end_inset
+
+ seems unsupported.
+ 
 \end_layout
 
 \begin_layout Section*
@@ -276,7 +309,7 @@ Training dynamics of a single instance
 \end_layout
 
 \begin_layout Standard
-We track how the PCA geometry of the residual stream for a single instance (
+I track how the PCA geometry of the residual stream for a single instance (
 \begin_inset Formula $\alpha=0.6,x=0.15$
 \end_inset
 
@@ -296,12 +329,21 @@ nolink "false"
 \end_inset
 
 ).
- At initialization,
- activations are unstructured.
- Over training,
- they progressively organize into a compact geometry.
- This structure emerges first in later layers and propagates backward: the final transformer layer develops belief-state geometry earliest,
- while the embedding layer remains relatively unstructured.
+ The reason for this is to see whether the present structure requires learning,
+ and if so,
+ if it may only emerge late in learning when loss was already low.
+ This is less important for the analysis where I used PCA to discover latents,
+ but is a concern when using a supervised readout,
+ since then the readout might overfit to the rich basis of the latent transformer dynamics even in absence of 
+\begin_inset Quotes eld
+\end_inset
+
+true
+\begin_inset Quotes erd
+\end_inset
+
+ structure.
+ 
 \end_layout
 
 \begin_layout Standard
@@ -333,14 +375,16 @@ name "fig:dynamics"
 
 \end_inset
 
-Training dynamics for instance
+Training dynamics for instance 
 \begin_inset Formula $(\alpha=0.6,x=0.15)$
 \end_inset
 
 .
- Rows: layers (bottom = embedding,
+ Rows:
+ layers (bottom = embedding,
  top = layer 2).
- Columns: training steps.
+ Columns:
+ training steps.
  Each subplot shows PCA of residual stream activations at the last sequence position.
 \end_layout
 
@@ -351,7 +395,13 @@ Training dynamics for instance
 
 \end_inset
 
-
+At initialization,
+ activations are unstructured.
+ Over training,
+ they progressively organize into a compact geometry.
+ This structure emerges first in later layers and propagates backward:
+ the final transformer layer develops belief-state geometry earliest,
+ while the embedding layer remains relatively unstructured.
 \end_layout
 
 \begin_layout Subsection*
@@ -361,7 +411,8 @@ Instance separation over context position
 \begin_layout Standard
 To test whether the transformer progressively infers which instance it is in,
  we examine how residual stream representations separate across instances as a function of sequence position.
- We select two pairs: a
+ We select two pairs:
+ a
 \begin_inset Quotes eld
 \end_inset
 
@@ -429,7 +480,8 @@ nolink "false"
 
 \begin_layout Standard
 At position 0,
- both pairs are fully overlapping: the model has seen only one token and cannot distinguish the underlying process.
+ both pairs are fully overlapping:
+ the model has seen only one token and cannot distinguish the underlying process.
  As context accumulates,
  the clusters progressively separate,
  particularly in deeper layers.
@@ -467,7 +519,8 @@ name "fig:separation_hard"
 
 \end_inset
 
-Hard pair: instance separation over sequence position (PCA).
+Hard pair:
+ instance separation over sequence position (PCA).
  Two instances with similar parameters (
 \begin_inset Formula $\alpha=0.79,x=0.11$
 \end_inset
@@ -477,8 +530,10 @@ Hard pair: instance separation over sequence position (PCA).
 \end_inset
 
 ).
- Rows: layers (bottom = embedding).
- Columns: sequence positions.
+ Rows:
+ layers (bottom = embedding).
+ Columns:
+ sequence positions.
 \end_layout
 
 \end_inset
@@ -520,7 +575,8 @@ name "fig:separation_easy"
 
 \end_inset
 
-Easy pair: instance separation over sequence position (PCA).
+Easy pair:
+ instance separation over sequence position (PCA).
  Two instances with very different parameters (
 \begin_inset Formula $\alpha=0.90,x=0.05$
 \end_inset
@@ -549,7 +605,8 @@ Flow fields conditioned on incoming evidence
 
 \begin_layout Standard
 To visualize how individual token observations update the residual stream,
- we compute flow fields: for each position
+ we compute flow fields:
+ for each position
 \begin_inset Formula $t$
 \end_inset
 
@@ -579,7 +636,8 @@ nolink "false"
 \end_inset
 
 ).
- Each column corresponds to one token value: each row to one layer.
+ Each column corresponds to one token value:
+ each row to one layer.
  We chose this analysis because the theoretical framework in Q2 predicts that incoming evidence
 \begin_inset Formula $\log P(x_{t}|\bm{s}_{t})$
 \end_inset
@@ -627,8 +685,10 @@ Flow fields for instance
 \end_inset
 
 .
- Rows: layers (bottom = embedding).
- Columns: incoming token
+ Rows:
+ layers (bottom = embedding).
+ Columns:
+ incoming token
 \begin_inset Formula $x_{t+1}\in\{0,1,2\}$
 \end_inset
 
@@ -650,32 +710,6 @@ Flow fields for instance
 Proposals for further analysis
 \end_layout
 
-\begin_layout Standard
-
-\series bold
-1.
- Subspace orthogonality.
-
-\series default
- Measure whether the subspaces used by different instances are orthogonal,
- following the vary-one analysis of Shai et al.
- The prediction is that each instance's belief state should live in an approximately orthogonal 2-dimensional subspace (since each Mess3 factor has
-\begin_inset Formula $d_{n}-1=2$
-\end_inset
-
- degrees of freedom).
-\end_layout
-
-\begin_layout Standard
-
-\series bold
-2.
- Causal interventions.
-
-\series default
- Perform activation patching to test whether the identified subspaces are causally relevant: projecting out an instance's subspace should impair prediction for that instance while leaving other instances unaffected.
-\end_layout
-
 \begin_layout Section*
 \begin_inset CommandInset label
 LatexCommand label
@@ -683,7 +717,8 @@ name "sec:training-details"
 
 \end_inset
 
-Appendix A: Training details
+Appendix A:
+ Training details
 \end_layout
 
 \begin_layout Standard
@@ -708,17 +743,16 @@ We construct a non-ergodic dataset from 8 Mess3 instances with parameter pairs
  (hidden state mixing rate).
  We sample 10,000 sequences of length 16 per instance (80,000 total),
  where each sequence is generated entirely from one ergodic instance.
- The model sees only token sequences: no instance label is provided.
+ The model sees only token sequences:
+ no instance label is provided.
 \end_layout
 
 \begin_layout Standard
 The transformer has 3 layers,
-
 \begin_inset Formula $d_{\text{model}}=64$
 \end_inset
 
 ,
-
 \begin_inset Formula $d_{\text{MLP}}=256$
 \end_inset
 
@@ -729,7 +763,8 @@ The transformer has 3 layers,
 \begin_inset Formula $\text{lr}=3\times10^{-4}$
 \end_inset
 
-) for up to 200 epochs with early stopping: we fit a line to
+) for up to 200 epochs with early stopping:
+ we fit a line to
 \begin_inset Formula $\log(\text{epoch})$
 \end_inset
 
@@ -815,8 +850,10 @@ name "fig:loss"
 
 \end_inset
 
-Per-instance training loss curves (left: log-log,
- right: linear).
+Per-instance training loss curves (left:
+ log-log,
+ right:
+ linear).
 \end_layout
 
 \end_inset
@@ -836,7 +873,8 @@ name "sec:supervised-appendix"
 
 \end_inset
 
-Appendix B: Supervised readout projections
+Appendix B:
+ Supervised readout projections
 \end_layout
 
 \begin_layout Standard
@@ -850,7 +888,8 @@ As a complement to the unsupervised PCA projections used in the main text,
 ,
  which are computable from the known Mess3 transition matrices.
  For the per-instance plots,
- we fit one readout per instance: for the separation plots,
+ we fit one readout per instance:
+ for the separation plots,
  we fit a single readout across both instances so the projection space is shared.
  Since the belief states live on a 2-simplex,
  we display the first two coordinates of the predicted belief vector.
@@ -886,8 +925,10 @@ name "fig:embed_supervised"
 \end_inset
 
 Supervised readout of residual stream to belief states (all sequence positions).
- Rows: layers.
- Columns: instances.
+ Rows:
+ layers.
+ Columns:
+ instances.
  Compare with Figure
 \begin_inset space ~
 \end_inset
@@ -945,7 +986,8 @@ name "fig:separation_hard_supervised"
 
 \end_inset
 
-Supervised readout: hard pair separation over sequence position.
+Supervised readout:
+ hard pair separation over sequence position.
  Compare with Figure
 \begin_inset space ~
 \end_inset
@@ -1003,7 +1045,8 @@ name "fig:separation_easy_supervised"
 
 \end_inset
 
-Supervised readout: easy pair separation over sequence position.
+Supervised readout:
+ easy pair separation over sequence position.
  Compare with Figure
 \begin_inset space ~
 \end_inset
