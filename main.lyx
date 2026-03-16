@@ -683,6 +683,13 @@ use the log,
 
 \begin_layout Paragraph
 Optimal inference in transformer forward pass
+\begin_inset CommandInset label
+LatexCommand label
+name "par:Optimal-inference"
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Standard
