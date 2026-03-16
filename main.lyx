@@ -163,6 +163,23 @@ Jan Bauer
 
 \end_layout
 
+\begin_layout Standard
+
+\shape italic
+I spent about 10 hours on the project,
+ I would have liked to spend more but was at a conference close to the deadline and did run out of time.
+ 
+\end_layout
+
+\begin_layout Standard
+
+\shape italic
+For questions Q3 and Q4,
+ I used LLMs to help compiling training details from the codebase,
+ but not for the content of the questions.
+ 
+\end_layout
+
 \begin_layout Subsubsection*
 Notation
 \end_layout
@@ -1146,29 +1163,11 @@ The rationale here is that
  therefore encoding context in a one-hot fashion.
 \end_layout
 
-\begin_layout Section*
-Q3
-\end_layout
-
-\begin_layout Subsubsection*
-After training,
- analyze the residual stream geometry.
- What structure is there?
- How does it relate to the belief geometries of the component processes?
-\end_layout
-
-\begin_layout Section*
-Q4
-\end_layout
-
-\begin_layout Subsubsection*
-Perform at least one additional analysis of your choosing that you think is interesting or informative.
- Tell us why you chose it.
- If you don’t have time to implement it,
- describe what you would do.
-\begin_inset Formula 
-\[
-\]
+\begin_layout Standard
+\begin_inset CommandInset include
+LatexCommand include
+filename "sim.lyx"
+literal "false"
 
 \end_inset
 

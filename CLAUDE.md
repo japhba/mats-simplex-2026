@@ -1,1 +1,3 @@
 - please put plotting, if possible and sensible, to a file plotting.py to keep the frontend notebook manageable
+- please use layout='constrained' for plots
+- save plots as 300 dpi pngs

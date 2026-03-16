@@ -92,3 +92,17 @@ class GPT(nn.Module):
             if i == layer:
                 return h
         return h  # layer == -1 or n_layers-1
+
+    def all_residual_streams(self, x) -> list[torch.Tensor]:
+        """Return residual stream after each layer: [emb, block0, block1, ..., blockN-1].
+
+        Returns list of (B, L, d_model) tensors. First element is the embedding.
+        """
+        B, L = x.shape
+        pos = torch.arange(L, device=x.device).unsqueeze(0)
+        h = self.tok_emb(x) + self.pos_emb(pos)
+        streams = [h]
+        for block in self.blocks:
+            h = block(h)
+            streams.append(h)
+        return streams

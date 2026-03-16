@@ -10,6 +10,8 @@ dependencies = [
     "tqdm",
     "ipykernel",
     "wandb",
+    "umap-learn",
+    "scipy",
 ]
 
 [tool.hatch.build.targets.wheel]
